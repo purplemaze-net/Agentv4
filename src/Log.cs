@@ -1,13 +1,12 @@
 namespace PPMV4.Agent.Logging;
 
-public enum LogLevel
-{
+public enum LogLevel {
     Info,
     Warning,
     Error
 }
 
-public class LogHandler : IDisposable{
+public class LogHandler : IDisposable {
     private static LogHandler? Instance = null;
     private readonly StreamWriter Writer;
     private object Lock;

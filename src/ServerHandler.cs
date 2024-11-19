@@ -1,14 +1,15 @@
 using System.Net;
 using PPMV4.Agent.Logging;
 
-namespace PPMV4.Agent.Server;
+namespace PPMV4.Agent.ServerHandler;
 
-public class ServerHandler{
-    public ServerHandler(string slug, ushort port, IPAddress ip){
+public class Server{
+    public List<string> WhitelistedIps = new();
+    public Server(string slug, ushort port, IPAddress ip){
 
     }
 
-    public static List<ServerHandler> ParseCommandLine(string[] args){
+    public static List<Server> ParseCommandLine(string[] args){
         throw new NotImplementedException();
     }
 

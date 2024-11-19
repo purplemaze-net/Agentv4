@@ -8,13 +8,13 @@ using PPMV4.Agent.Structures;
 
 namespace PPMV4.Agent.WebServer
 {
-    public class Server
+    public class WebServer
     {
         public HttpListener Listener;
         X509Certificate2 PubCert;
         public const int Port = 6950;
 
-        public Server(X509Certificate2 cert){
+        public WebServer(X509Certificate2 cert){
             PubCert = cert;
 
             // Start web server
