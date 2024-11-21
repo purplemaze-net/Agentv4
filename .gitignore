@@ -5,7 +5,6 @@
 
 ## Test
 test.csproj
-Program.cs
 test.sh
 # Ignore all json files
 *.json
