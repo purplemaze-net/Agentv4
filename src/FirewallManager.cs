@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.Net;
 using System.Security.Principal;
+using Newtonsoft.Json;
 using PPMV4.Agent.Logging;
 using PPMV4.Agent.ServerHandler;
+using PPMV4.Agent.Structures;
 
 namespace PPMV4.Agent.Firewall;
 
@@ -10,6 +12,7 @@ public class FirewallManager {
     private static FirewallManager? Instance;
     Dictionary<string, Server> Servers;
     private const string MasterUrl = "https://agent.api.purplemaze.net";
+    public const int AgentPort = 6950;
 
     private FirewallManager(Dictionary<string, Server> servers){
         Servers = servers;
@@ -33,11 +36,11 @@ public class FirewallManager {
     /// <param name="address"></param>
     /// <param name="port"></param>
     /// <returns></returns>
-    public static bool Add(string address, ushort port){
+    public static bool Add(string address, ushort port, bool infra = false){
 #if WINDOWS
-        return AddOnWindows(address, port);
+        return AddOnWindows(address, port, infra);
 #elif LINUX
-        return AddOnLinux(address, port);
+        return AddOnLinux(address, port, infra);
 #endif
         return false;
     }
@@ -122,8 +125,45 @@ public class FirewallManager {
     /// <summary>
     ///  Initialize the whitelist: Fetch the IPs for each server, then add them to the firewall.
     /// </summary>
-    public void InitWhitelist(){
+    public bool InitWhitelist(){
+        new Log($"Initializing whitelist", LogLevel.Info);
+        bool systemDone = false;
 
+        foreach (var server in Servers){
+            // HTTP request
+            using (var httpClient = new HttpClient()) {
+                // TODO: Make the request from the interface specified in server.Value.Interface
+
+                var response = httpClient.GetAsync($"{MasterUrl}/ranges/{server.Value.Slug}").GetAwaiter().GetResult();
+                if (response.IsSuccessStatusCode) {
+                    var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    ApiResponse<InitialRequestData>? data = JsonConvert.DeserializeObject<ApiResponse<InitialRequestData>>(content);
+                    if (data is null || data.Data is null) {
+                        new Log($"Failed to deserialize IP ranges for server {server.Key}", LogLevel.Error);
+                        return false;
+                    }
+
+                    // Add infra ranges (used to ping this agent)
+                    if(!systemDone){
+                        foreach (var range in data.Data.InfraRanges) {
+                            Add(range, AgentPort, true);
+                        }
+                        systemDone = true;
+                    }
+
+                    // Add proxies ranges
+                    foreach (var range in data.Data.ProxiesRanges) {
+                        Add(range, server.Value.Port);
+                    }
+                }
+                else
+                {
+                    new Log($"Failed to fetch IP ranges for server {server.Key}. Status code: {response.StatusCode}", LogLevel.Error);
+                }
+            }
+        }
+        
+        return true;
     }
 
     /// <summary>
@@ -132,8 +172,13 @@ public class FirewallManager {
     /// <param name="address"></param>
     /// <param name="port"></param>
     /// <returns></returns>
-    private bool AddOnWindows(string address, ushort port){
-        throw new NotImplementedException();   
+    private bool AddOnWindows(string address, ushort port, bool infra = false){
+#if WINDOWS
+        return AddOnWindows(address, port, infra);
+#elif LINUX
+        return AddOnLinux(address, port, infra);
+#endif
+        return false;
     }
 
     /// <summary>
@@ -142,8 +187,13 @@ public class FirewallManager {
     /// <param name="address"></param>
     /// <param name="port"></param>
     /// <returns></returns>
-    private bool AddOnLinux(string address, ushort port){
-        throw new NotImplementedException();
+    private bool AddOnLinux(string address, ushort port, bool infra = false){
+#if WINDOWS
+        return AddOnWindows(address, port, infra);
+#elif LINUX
+        return AddOnLinux(address, port, infra);
+#endif
+        return false;
     }
 
     /// <summary>
@@ -152,7 +202,7 @@ public class FirewallManager {
     /// <param name="address"></param>
     /// <param name="port"></param>
     /// <returns></returns>
-    private bool RemoveOnWindows(string address, ushort port){
+    private bool RemoveOnWindows(string address, ushort port, bool infra = false){
         throw new NotImplementedException();   
     }
 
@@ -162,7 +212,7 @@ public class FirewallManager {
     /// <param name="address"></param>
     /// <param name="port"></param>
     /// <returns></returns>
-    private bool RemoveOnLinux(string address, ushort port){
+    private bool RemoveOnLinux(string address, ushort port, bool infra = false){
         throw new NotImplementedException();
     }
 
