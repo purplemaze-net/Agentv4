@@ -1,12 +1,18 @@
 using System.Net;
-using PPMV4.Agent.Logging;
 
 namespace PPMV4.Agent.ServerHandler;
 
 public class Server{
     public List<string> WhitelistedIps = new();
-    public Server(string slug, ushort port, IPAddress ip){
+    public ushort Port; // Server local port
+    public string Slug; // Server slug
+    public IPAddress IP; // Interface bound by server
 
+    public Server(string slug, ushort port, IPAddress ip){
+        Slug = slug;
+        Port = port;
+        WhitelistedIps.Add(ip.ToString()); // Authorize self (^^)
+        IP = ip;
     }
 
     public static List<Server> ParseCommandLine(string[] args){
