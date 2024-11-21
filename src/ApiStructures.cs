@@ -1,9 +1,17 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace PPMV4.Agent.Structures;
 
-public class ApiResponse {
+#pragma warning disable CS8618 // Don't warn possible-null-values as it will throw an error if the serialization fails.
+public class InitialRequestData {
+    [JsonProperty("infra", Required = Required.Always)]
+    public List<string> InfraRanges { get; set; }
+
+    [JsonProperty("proxies", Required = Required.Always)]
+    public List<string> ProxiesRanges { get; set; }
+}
+
+public class ApiResponse<T> {
     [JsonProperty("success", Required = Required.Always)]
     public bool Success { get; set; }
 
@@ -14,7 +22,7 @@ public class ApiResponse {
     public string? Message { get; set; }
 
     [JsonProperty("data", Required = Required.AllowNull, NullValueHandling = NullValueHandling.Ignore)]
-    public JObject? Data { get; set; }
+    public T? Data { get; set; }
 
     public ApiResponse(bool success, string description){
         Success = success;
@@ -32,7 +40,6 @@ public enum WhitelistAction{
     Remove
 }
 
-#pragma warning disable CS8618 // Don't warn as it will throw an error if the serialization fails.
 public class ApiRequest {
 
     [JsonProperty("ip", Required = Required.Always)]

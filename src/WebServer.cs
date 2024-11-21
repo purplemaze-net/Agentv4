@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PPMV4.Agent.Firewall;
 using PPMV4.Agent.Logging;
 using PPMV4.Agent.Structures;
 
@@ -12,14 +14,13 @@ namespace PPMV4.Agent.WebServer
     {
         public HttpListener Listener;
         X509Certificate2 PubCert;
-        public const int Port = 6950;
 
         public WebServer(X509Certificate2 cert){
             PubCert = cert;
 
             // Start web server
             Listener = new();
-            Listener.Prefixes.Add($"http://+:{Port}/");
+            Listener.Prefixes.Add($"http://+:{FirewallManager.AgentPort}/");
         }
 
         private bool CheckTimestamp(long timestamp, int ttl){
@@ -44,7 +45,7 @@ namespace PPMV4.Agent.WebServer
             }
         }
 
-        public static async void SendResponse(HttpListenerResponse resp, ApiResponse apiResp, int httpCode){
+        public static async void SendResponse(HttpListenerResponse resp, ApiResponse<JObject> apiResp, int httpCode){
             if(!resp.OutputStream.CanWrite)
                 return;
 
@@ -58,9 +59,9 @@ namespace PPMV4.Agent.WebServer
             resp.Close();
         }
 
-        public (ApiResponse, int) WhitelistHandler(HttpListenerRequest req, WhitelistAction action){
+        public (ApiResponse<JObject>, int) WhitelistHandler(HttpListenerRequest req, WhitelistAction action){
             // Read body
-            ApiResponse resp = new(false, "Generic Error");
+            ApiResponse<JObject> resp = new(false, "Generic Error");
             
             string body = "";
 
@@ -107,7 +108,7 @@ namespace PPMV4.Agent.WebServer
                     HttpListenerRequest req = ctx.Request;
                     HttpListenerResponse resp = ctx.Response;
 
-                    ApiResponse apiResp = new(false, "Generic error");
+                    ApiResponse<JObject> apiResp = new(false, "Generic error");
 
                     string? path = req?.Url?.AbsolutePath;
 
