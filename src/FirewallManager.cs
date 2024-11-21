@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Net;
-using System.Text;
+using System.Security.Principal;
 using PPMV4.Agent.Logging;
 using PPMV4.Agent.ServerHandler;
 
@@ -61,7 +61,27 @@ public class FirewallManager {
     ///  Init the firewall for Windows.
     /// </summary>
     private static bool InitFirewallWindows() {
-        throw new NotImplementedException();
+        // Check if the user is admin
+#pragma warning disable CA1416 // Platform compatibility
+        if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)) {
+            new Log($"You need to be admin to use the Windows Firewall. Please re-run this software with the appropriate permissions.", LogLevel.Error);
+            return false;
+        }
+#pragma warning restore CA1416 // Platform compatibility
+
+        // Check if the firewall is enabled
+        if (!Process.Start("netsh", "advfirewall show allprofiles").StandardOutput.ReadToEnd().Contains("State ON")) {
+            new Log($"The Windows Firewall is disabled. Please enable it and try again.", LogLevel.Error);
+            return false;
+        }
+
+        // Purge any "PPMV4" rules
+        if (Process.Start("netsh", "advfirewall firewall delete rule name=\"PPMV4\"").ExitCode != 0) {
+            new Log($"Failed to delete existing PPMV4 rules. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
