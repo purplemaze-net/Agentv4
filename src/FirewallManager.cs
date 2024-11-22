@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Principal;
 using Newtonsoft.Json;
 using PPMV4.Agent.Logging;
@@ -122,6 +123,31 @@ public class FirewallManager {
         return true;
     }
 
+    // Ref: https://stackoverflow.com/questions/65930192/how-to-bind-httpclient-to-a-specific-source-ip-address-in-net-5
+    public static HttpClient GetHttpClient(IPAddress address) {
+        if (IPAddress.Any.Equals(address))
+            return new HttpClient();
+
+        SocketsHttpHandler handler = new SocketsHttpHandler();
+
+        handler.ConnectCallback = async (context, cancellationToken) => {
+            Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            socket.Bind(new IPEndPoint(address, 0));
+            socket.NoDelay = true;
+
+            try {
+                await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
+                return new NetworkStream(socket, true);
+            }
+            catch {
+                socket.Dispose();
+                throw;
+            }
+        };
+
+        return new HttpClient(handler);
+    }
+
     /// <summary>
     ///  Initialize the whitelist: Fetch the IPs for each server, then add them to the firewall.
     /// </summary>
@@ -131,8 +157,7 @@ public class FirewallManager {
 
         foreach (var server in Servers){
             // HTTP request
-            using (var httpClient = new HttpClient()) {
-                // TODO: Make the request from the interface specified in server.Value.Interface
+            using (var httpClient = GetHttpClient(server.Value.IP)) {
 
                 var response = httpClient.GetAsync($"{MasterUrl}/ranges/{server.Value.Slug}").GetAwaiter().GetResult();
                 if (response.IsSuccessStatusCode) {
