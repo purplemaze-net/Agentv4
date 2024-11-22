@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Principal;
+using NetTools;
 using Newtonsoft.Json;
 using PPMV4.Agent.Logging;
 using PPMV4.Agent.ServerHandler;
@@ -27,36 +28,6 @@ public class FirewallManager {
         return InitFirewallWindows();
 #elif LINUX
         return InitFirewallLinux();
-#endif
-        return false;
-    }
-
-    /// <summary>
-    ///  Add a firewall rule for the address on the port.
-    /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
-    /// <returns></returns>
-    public static bool Add(string address, ushort port, bool infra = false){
-#if WINDOWS
-        return AddOnWindows(address, port, infra);
-#elif LINUX
-        return AddOnLinux(address, port, infra);
-#endif
-        return false;
-    }
-
-    /// <summary>
-    ///  Remove the firewall rule for the address on the port.
-    /// </summary>
-    /// <param name="address"></param>
-    /// <param name="port"></param>
-    /// <returns></returns>
-    public static bool Remove(string address, ushort port){
-#if WINDOWS
-        return RemoveOnWindows(address, port);
-#elif LINUX
-        return RemoveOnLinux(address, port);
 #endif
         return false;
     }
@@ -123,6 +94,57 @@ public class FirewallManager {
         return true;
     }
 
+    /// <summary>
+    ///  Block traffic for a server
+    /// </summary>
+    /// <param name="server"></param>
+    /// <returns></returns>
+    private bool DefaultBlockForServer(Server server){
+#if WINDOWS
+        return DefaultBlockForServerWindows(server.Port);
+#elif LINUX
+        return DefaultBlockForServerLinux(server.Port);
+#endif
+        return false;
+    }
+
+
+    /// <summary>
+    ///  Block traffic for a server (Linux)
+    /// </summary>
+    /// <param name="port"></param>
+    /// <returns></returns>
+    private bool DefaultBlockForServerLinux(ushort port){
+        // Add block rules in the iptables chain (TCP)
+        if (Process.Start("iptables", $"-A PPMV4 -p tcp --dport {port} -j DROP").ExitCode != 0) {
+            new Log($"Failed to add block rule for port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // Then, UDP
+        if (Process.Start("iptables", $"-A PPMV4 -p udp --dport {port} -j DROP").ExitCode != 0) {
+            new Log($"Failed to add block rule for port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Block traffic for a server (Windows)
+    /// </summary>
+    /// <param name="port"></param>
+    /// <returns></returns>
+    private bool DefaultBlockForServerWindows(ushort port){
+        // Blocked by default, nothing to do (for the moment)
+        return true;
+    }
+
+    /// <summary>
+    ///  Get an HttpClient bound to a specific IP address.
+    /// </summary>
+    /// <param name="address"></param>
+    /// <returns></returns>
     // Ref: https://stackoverflow.com/questions/65930192/how-to-bind-httpclient-to-a-specific-source-ip-address-in-net-5
     public static HttpClient GetHttpClient(IPAddress address) {
         if (IPAddress.Any.Equals(address))
@@ -156,6 +178,12 @@ public class FirewallManager {
         bool systemDone = false;
 
         foreach (var server in Servers){
+            // Init block
+            if(!DefaultBlockForServer(server.Value)){
+                new Log($"Failed to block traffic for server {server.Key}. Exiting.", LogLevel.Error);
+                return false;
+            }
+
             // HTTP request
             using (var httpClient = GetHttpClient(server.Value.IP)) {
 
@@ -192,12 +220,19 @@ public class FirewallManager {
     }
 
     /// <summary>
-    ///  Authorize on windows Firewall for address on port (TCP+UDP)
+    ///  Add a firewall rule for the range on the port.
     /// </summary>
-    /// <param name="address"></param>
+    /// <param name="range"></param>
     /// <param name="port"></param>
+    /// <param name="infra"></param>
     /// <returns></returns>
-    private bool AddOnWindows(string address, ushort port, bool infra = false){
+    public static bool Add(string range, ushort port, bool infra = false){
+        // Check range validity
+        if(!IPAddressRange.TryParse(range, out _)){
+            new Log($"Invalid range: {range}", LogLevel.Warning);
+            return false;
+        }
+
 #if WINDOWS
         return AddOnWindows(address, port, infra);
 #elif LINUX
@@ -207,28 +242,91 @@ public class FirewallManager {
     }
 
     /// <summary>
-    ///  Authorize on iptables for address on port (TCP+UDP)
+    ///  Remove the firewall rule for the address on the port.
     /// </summary>
     /// <param name="address"></param>
     /// <param name="port"></param>
+    /// <param name="infra"></param>
     /// <returns></returns>
-    private bool AddOnLinux(string address, ushort port, bool infra = false){
+    public static bool Remove(string address, ushort port, bool infra = false){
 #if WINDOWS
-        return AddOnWindows(address, port, infra);
+        return RemoveOnWindows(address, port, infra);
 #elif LINUX
-        return AddOnLinux(address, port, infra);
+        return RemoveOnLinux(address, port, infra);
 #endif
         return false;
     }
 
     /// <summary>
-    ///  De-authorize on windows Firewall for address on port (TCP+UDP)
+    ///  Authorize on iptables for range on port (TCP+UDP)
     /// </summary>
-    /// <param name="address"></param>
+    /// <param name="range"></param>
     /// <param name="port"></param>
+    /// <param name="infra"></param>
     /// <returns></returns>
-    private bool RemoveOnWindows(string address, ushort port, bool infra = false){
-        throw new NotImplementedException();   
+    private bool AddOnLinux(string range, ushort port, bool infra = false){
+        // The range is already validated
+
+        // Infra: Whitelist for *this agent* port + the server port)
+        if(infra){
+            // Only tcp for infra
+            if (Process.Start("iptables", $"-I PPMV4 -s {range} -p tcp --dport {AgentPort} -j ACCEPT").ExitCode != 0) {
+                new Log($"Failed to add infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+                return false;
+            }
+
+            return AddOnLinux(range, port, false); // WL on server port
+        }
+
+        // Add the tcp rule
+        if (Process.Start("iptables", $"-I PPMV4 -s {range} -p tcp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // Then, the UDP one
+        if (Process.Start("iptables", $"-I PPMV4 -s {range} -p udp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///  Authorize on windows Firewall for range on port (TCP+UDP)
+    /// </summary>
+    /// <param name="range"></param>
+    /// <param name="port"></param>
+    /// <param name="infra"></param>
+    /// <returns></returns>
+    private bool AddOnWindows(string range, ushort port, bool infra = false){
+        // The range is already validated
+
+        // Infra: Whitelist for *this agent* port + the server port
+        if(infra){
+            // Only TCP for infra
+            if (Process.Start("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").ExitCode != 0) {
+                new Log($"Failed to add infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+                return false;
+            }
+
+            return AddOnWindows(range, port, false); // WL on server port
+        }
+
+        // Add the TCP rule
+        if (Process.Start("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").ExitCode != 0) {
+            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // Then, the UDP one
+        if (Process.Start("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").ExitCode != 0) {
+            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -236,17 +334,69 @@ public class FirewallManager {
     /// </summary>
     /// <param name="address"></param>
     /// <param name="port"></param>
+    /// <param name="infra"></param>
     /// <returns></returns>
     private bool RemoveOnLinux(string address, ushort port, bool infra = false){
-        throw new NotImplementedException();
+        // Range already validated
+
+        // Infra: Remove the infra rule
+        if(infra){
+            if (Process.Start("iptables", $"-D PPMV4 -s {address} -p tcp --dport {AgentPort} -j ACCEPT").ExitCode != 0) {
+                new Log($"Failed to remove infra rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+                return false;
+            }
+
+            return RemoveOnLinux(address, port, false); // Remove on server port aswell
+        }
+
+        // Remove the TCP rule
+        if (Process.Start("iptables", $"-D PPMV4 -s {address} -p tcp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // Then, the UDP one
+        if (Process.Start("iptables", $"-D PPMV4 -s {address} -p udp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
     }
 
-    public bool AddWhitelist(string slug, IPAddress ip){
-        throw new NotImplementedException();
-    }
+    /// <summary>
+    ///  De-authorize on windows Firewall for address on port (TCP+UDP)
+    /// </summary>
+    /// <param name="address"></param>
+    /// <param name="port"></param>
+    /// <param name="infra"></param>
+    /// <returns></returns>
+    private bool RemoveOnWindows(string address, ushort port, bool infra = false){
+        // Range already validated
 
-    public bool RemoveWhitelist(string slug, IPAddress ip){
-        throw new NotImplementedException();
+        // Infra: Remove the infra rule
+        if(infra){
+            if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={address}").ExitCode != 0) {
+                new Log($"Failed to remove infra rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+                return false;
+            }
+
+            return RemoveOnWindows(address, port, false); // Remove on server port aswell
+        }
+
+        // Remove the TCP rule
+        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={address}").ExitCode != 0) {
+            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // Then, the UDP one
+        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={address}").ExitCode != 0) {
+            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        return true;
     }
 
     public static FirewallManager GetInstance(Dictionary<string, Server>? servers){
