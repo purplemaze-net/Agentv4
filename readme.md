@@ -1,4 +1,7 @@
 # PurpleMaze Agent (Pagent) V4
+## DISCLAIMER
+:warning: ACTUALLY, THIS VERSION IS NOT STABLE / WORKING. DO NOT USE.  
+
 ## Introduction
 As I own [PurpleMaze](https://purplemaze.net), an Anti-DDoS solution with rotating proxies, it became clear to me that I needed to find a way of authorizing only the IPs currently in use on customers' servers to prevent them from being scanned. So I developed this Pagent with this in mind.    
 
@@ -10,6 +13,14 @@ I updated the code from the previous (V3) version to be static, when it was befo
 On startup, the Pagent retrieves the list of IPs from the Master server and adds them to the whitelist of necessary ports, then closes these ports to the rest of the Internet.  
 PurpleMaze's core servers make a request to the Pagent as soon as a proxy is created or deleted for the server, to add or remove its IP from the whitelist.  
 
+## Improvments from V3
+As a new version means new features/improvments, I rewrote the entire software to fix some bugs, and address lacks of support I've been encountering. This includes (but does not limit to):
+- Linux: Applying the iptables rules in a chain, to avoid clearing the whole set at each startup
+- Windows: Fixed rule deletions
+- Security: Verify the authenticity of each incoming request
+- Logging: Added a proper logger 
+- Setup: Treats different servers separately
+
 ## How to build ?
 Well, even if I don't know why you would want to build it yourself, you can do it by:
 - Clone the repo
@@ -17,7 +28,6 @@ Well, even if I don't know why you would want to build it yourself, you can do i
 - Install DotNet SDK 6.0+
 - Run the "build.bat" file (Both Windows and Linux are supported)
 - Solutions in `bin/Release/net6.0/linux-x64/publish` and `bin/Release/net6.0/win-x64/publish`
-
 
 ## Can I help ?
 Of course! Don't hesitate to make a PR or contact me on Discord (@m2p_) if you see a possible improvement.  
