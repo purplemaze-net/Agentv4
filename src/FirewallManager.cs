@@ -234,25 +234,25 @@ public class FirewallManager {
         }
 
 #if WINDOWS
-        return AddOnWindows(address, port, infra);
+        return AddOnWindows(range, port, infra);
 #elif LINUX
-        return AddOnLinux(address, port, infra);
+        return AddOnLinux(range, port, infra);
 #endif
         return false;
     }
 
     /// <summary>
-    ///  Remove the firewall rule for the address on the port.
+    ///  Remove the firewall rule for the range on the port.
     /// </summary>
-    /// <param name="address"></param>
+    /// <param name="range"></param>
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    public static bool Remove(string address, ushort port, bool infra = false){
+    public static bool Remove(string range, ushort port, bool infra = false){
 #if WINDOWS
-        return RemoveOnWindows(address, port, infra);
+        return RemoveOnWindows(range, port, infra);
 #elif LINUX
-        return RemoveOnLinux(address, port, infra);
+        return RemoveOnLinux(range, port, infra);
 #endif
         return false;
     }
@@ -336,36 +336,36 @@ public class FirewallManager {
     /// <summary>
     ///  De-authorize on iptables for address on port (TCP+UDP)
     /// </summary>
-    /// <param name="address"></param>
+    /// <param name="range"></param>
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool RemoveOnLinux(string address, ushort port, bool infra = false){
+    private bool RemoveOnLinux(string range, ushort port, bool infra = false){
         // Range already validated
 
         // Infra: Remove the infra rule
         if(infra){
-            if (Process.Start("iptables", $"-D PPMV4 -s {address} -p tcp --dport {AgentPort} -j ACCEPT").ExitCode != 0) {
-                new Log($"Failed to remove infra rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            if (Process.Start("iptables", $"-D PPMV4 -s {range} -p tcp --dport {AgentPort} -j ACCEPT").ExitCode != 0) {
+                new Log($"Failed to remove infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
                 return false;
             }
 
-            return RemoveOnLinux(address, port, false); // Remove on server port aswell
+            return RemoveOnLinux(range, port, false); // Remove on server port aswell
         }
 
         // Remove the TCP rule
-        if (Process.Start("iptables", $"-D PPMV4 -s {address} -p tcp --dport {port} -j ACCEPT").ExitCode != 0) {
-            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+        if (Process.Start("iptables", $"-D PPMV4 -s {range} -p tcp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
         // Then, the UDP one
-        if (Process.Start("iptables", $"-D PPMV4 -s {address} -p udp --dport {port} -j ACCEPT").ExitCode != 0) {
-            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+        if (Process.Start("iptables", $"-D PPMV4 -s {range} -p udp --dport {port} -j ACCEPT").ExitCode != 0) {
+            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
-        new Log($"Removed {address} on port {port}", LogLevel.Info);
+        new Log($"Removed {range} on port {port}", LogLevel.Info);
 
         return true;
     }
@@ -373,36 +373,36 @@ public class FirewallManager {
     /// <summary>
     ///  De-authorize on windows Firewall for address on port (TCP+UDP)
     /// </summary>
-    /// <param name="address"></param>
+    /// <param name="range"></param>
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool RemoveOnWindows(string address, ushort port, bool infra = false){
+    private bool RemoveOnWindows(string range, ushort port, bool infra = false){
         // Range already validated
 
         // Infra: Remove the infra rule
         if(infra){
             if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={address}").ExitCode != 0) {
-                new Log($"Failed to remove infra rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+                new Log($"Failed to remove infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
                 return false;
             }
 
-            return RemoveOnWindows(address, port, false); // Remove on server port aswell
+            return RemoveOnWindows(range, port, false); // Remove on server port aswell
         }
 
         // Remove the TCP rule
         if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={address}").ExitCode != 0) {
-            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
         // Then, the UDP one
         if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={address}").ExitCode != 0) {
-            new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
+            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
-        new Log($"Removed {address} on port {port}", LogLevel.Info);
+        new Log($"Removed {range} on port {port}", LogLevel.Info);
 
         return true;
     }
