@@ -290,6 +290,8 @@ public class FirewallManager {
             return false;
         }
 
+        new Log($"Whitelisted {range} on port {port}", LogLevel.Info);
+
         return true;
     }
 
@@ -326,6 +328,8 @@ public class FirewallManager {
             return false;
         }
 
+        new Log($"Whitelisted {range} on port {port}", LogLevel.Info);
+
         return true;
     }
 
@@ -360,6 +364,8 @@ public class FirewallManager {
             new Log($"Failed to remove rule for address {address} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
+
+        new Log($"Removed {address} on port {port}", LogLevel.Info);
 
         return true;
     }
@@ -396,10 +402,12 @@ public class FirewallManager {
             return false;
         }
 
+        new Log($"Removed {address} on port {port}", LogLevel.Info);
+
         return true;
     }
 
-    public static FirewallManager GetInstance(Dictionary<string, Server>? servers){
+    public static FirewallManager GetInstance(Dictionary<string, Server>? servers = null){
         if(Instance is null && servers is null)
             throw new Exception("Uninitialized");
         else if(Instance is null && servers is not null){
