@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PPMV4.Agent.Firewall;
 using PPMV4.Agent.Logging;
+using PPMV4.Agent.ServerHandler;
 using PPMV4.Agent.Structures;
 
 namespace PPMV4.Agent.WebServer
@@ -14,9 +15,11 @@ namespace PPMV4.Agent.WebServer
     {
         public HttpListener Listener;
         X509Certificate2 PubCert;
+        Dictionary<string, Server> Servers;
 
-        public WebServer(X509Certificate2 cert){
+        public WebServer(X509Certificate2 cert, Dictionary<string, Server> servers){
             PubCert = cert;
+            Servers = servers;
 
             // Start web server
             Listener = new();
@@ -59,7 +62,7 @@ namespace PPMV4.Agent.WebServer
             resp.Close();
         }
 
-        public (ApiResponse<JObject>, int) WhitelistHandler(HttpListenerRequest req, WhitelistAction action){
+        public (ApiResponse<JObject>, int) WhitelistHandler(HttpListenerRequest req, WhitelistAction action, string slug){
             // Read body
             ApiResponse<JObject> resp = new(false, "Generic Error");
             
@@ -93,8 +96,38 @@ namespace PPMV4.Agent.WebServer
                 return (resp, 400);
             }
 
-            // TODO: Whitelist job
-            throw new NotImplementedException();
+            // Check slug
+            if(!Servers.ContainsKey(slug)){
+                resp.Error = "Slug mismatch";
+                return (resp, 400);
+            }
+
+            try{
+                switch(action){
+                    case WhitelistAction.Add:
+                        foreach(string range in apiReq.Ranges)
+                            if(!FirewallManager.Add(range, Servers[slug].Port, false)){
+                                resp.Error = "Failed to add IP to whitelist";
+                                return (resp, 400);
+                            }
+                        return (resp, 200);
+                    case WhitelistAction.Remove:
+                        foreach(string range in apiReq.Ranges)
+                            if(!FirewallManager.Remove(range, Servers[slug].Port, false)){
+                                resp.Error = "Failed to remove IP from whitelist";
+                                return (resp, 400);
+                            }
+                        return (resp, 200);
+                    default:
+                        resp.Error = "Unknown action";
+                        return (resp, 400);
+                }
+            }
+            catch(Exception e){
+                new Log($"Error in whitelist handler: {e.Message}");
+                resp.Error = "Internal server error";
+                return (resp, 500);
+            }
         }
 
         public async Task HandleIncomingConnections()
@@ -124,16 +157,24 @@ namespace PPMV4.Agent.WebServer
                         apiResp = new(true, "alive !");
                     }
                     else if (path.Contains("/whitelist")) {
+                        // Extract slug
+                        string? slug = null;
                         // check method
+                        if(path.Split("/").Count() != 3){
+                            apiResp = new(false, "Unknown route");
+                            SendResponse(resp, apiResp, 404);
+                            return;
+                        }
+                        slug = path.Split("/")[2]; // /whitelist/{slug}
+                        
                         if (req?.HttpMethod == "POST") {
                             // handle request
-                            (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Remove);
-                            SendResponse(resp, apiResp, respCode);
-                            
+                            (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Add, slug);
+                            SendResponse(resp, apiResp, respCode);    
                         }
                         else if (req?.HttpMethod == "DELETE") {
                             // handle request
-                            (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Remove);
+                            (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Remove, slug);
                             SendResponse(resp, apiResp, respCode);
                         }
                         else {
