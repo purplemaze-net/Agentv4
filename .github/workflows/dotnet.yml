@@ -36,20 +36,11 @@ jobs:
       id: release
       run: echo "shortsha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-    - name: List files
-      run: ls -R publish
-
-    - name: List files 2
-      run: ls -R .
-
-    - name: pwd
-      run: pwd
-  
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.release.outputs.shortsha }}
         token: ${{ secrets.TOKEN }}
         files: |
-           ${github.workspace}/publish/linux/
-           ${github.workspace}/publish/windows/
+          publish/linux/agent
+          publish/windows/agent.exe
