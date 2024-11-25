@@ -18,16 +18,4 @@ public class Server{
     public static List<Server> ParseCommandLine(string[] args){
         throw new NotImplementedException();
     }
-
-    public string InitPort(){
-        throw new NotImplementedException();
-    }
-
-    public string AddIp(){
-        throw new NotImplementedException();
-    }
-
-    public string RemoveIp(){
-        throw new NotImplementedException();
-    }
 }
