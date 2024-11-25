@@ -15,7 +15,7 @@ public class Server{
         IP = ip;
     }
 
-    public static List<Server> ParseCommandLine(string[] args){
+    public static Dictionary<string, Server> ParseCommandLine(string[] args){
         throw new NotImplementedException();
     }
 }

@@ -1,12 +1,13 @@
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using PPMV4.Agent.Firewall;
 using PPMV4.Agent.Logging;
+using PPMV4.Agent.ServerHandler;
+using PPMV4.Agent.WebServer;
 
-class Agent
-{
-    static void Main()
-    {
+class Agent {
+    static void Main(string[] args) {
         Console.WriteLine("PurpleMaze Agent (V4)");
         Console.WriteLine("Copyright (©) 2022-" + DateTimeOffset.UtcNow.Date.Year.ToString());
         Console.WriteLine("MathiAs2Pique (@m2p_)");
@@ -20,7 +21,19 @@ class Agent
         byte[] publicCert = GetRessource("Purplemaze-Agent.keys.public.key");
         X509Certificate2 cert = new(publicCert);
 
+        // Parse servers
+        Dictionary<string, Server> servers = Server.ParseCommandLine(args);
+
+        // Initialize firewall manager
+        FirewallManager.GetInstance(servers);
+        if(!FirewallManager.InitFirewall()){
+            new Log("Firewall initialization failed", LogLevel.Error);
+            Environment.Exit(1);
+        }
+
         // Start web server
+        WebServer webServer = new(cert, servers);
+        Task.Run(webServer.startWebServer).Wait();
     }
 
     /// <summary>
