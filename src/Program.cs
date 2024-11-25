@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using PPMV4.Agent.Logging;
 
 class Agent
 {
