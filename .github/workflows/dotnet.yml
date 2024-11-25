@@ -35,7 +35,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.sha }}
+        tag_name: ${{ github.ref }}
         token: ${{ secrets.TOKEN }}
         files: |
            ${GITHUB_WORKSPACE}/publish/linux
