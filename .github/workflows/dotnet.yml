@@ -16,6 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Write public key
+      run: 'echo $PUBLIC_CERT > keys/public.key'
+      shell: bash
+      env:
+        PUBLIC_CERT: ${{secrets.PUBLIC_CERT}}
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
