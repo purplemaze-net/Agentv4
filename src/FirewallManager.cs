@@ -264,7 +264,7 @@ public class FirewallManager {
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool AddOnLinux(string range, ushort port, bool infra = false){
+    private static bool AddOnLinux(string range, ushort port, bool infra = false){
         // The range is already validated
 
         // Infra: Whitelist for *this agent* port + the server port)
@@ -302,7 +302,7 @@ public class FirewallManager {
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool AddOnWindows(string range, ushort port, bool infra = false){
+    private static bool AddOnWindows(string range, ushort port, bool infra = false){
         // The range is already validated
 
         // Infra: Whitelist for *this agent* port + the server port
@@ -340,7 +340,7 @@ public class FirewallManager {
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool RemoveOnLinux(string range, ushort port, bool infra = false){
+    private static bool RemoveOnLinux(string range, ushort port, bool infra = false){
         // Range already validated
 
         // Infra: Remove the infra rule
@@ -377,12 +377,12 @@ public class FirewallManager {
     /// <param name="port"></param>
     /// <param name="infra"></param>
     /// <returns></returns>
-    private bool RemoveOnWindows(string range, ushort port, bool infra = false){
+    private static bool RemoveOnWindows(string range, ushort port, bool infra = false){
         // Range already validated
 
         // Infra: Remove the infra rule
         if(infra){
-            if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={address}").ExitCode != 0) {
+            if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").ExitCode != 0) {
                 new Log($"Failed to remove infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
                 return false;
             }
@@ -391,13 +391,13 @@ public class FirewallManager {
         }
 
         // Remove the TCP rule
-        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={address}").ExitCode != 0) {
+        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").ExitCode != 0) {
             new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
         // Then, the UDP one
-        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={address}").ExitCode != 0) {
+        if (Process.Start("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").ExitCode != 0) {
             new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
