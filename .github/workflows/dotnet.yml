@@ -36,11 +36,14 @@ jobs:
       id: release
       run: echo "shortsha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+    - name: Rename files
+      run: mv publish/linux/agent publish/linux/agent-linux-x64 && mv publish/windows/agent.exe publish/windows/agent-windows-x64.exe
+
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.release.outputs.shortsha }}
         token: ${{ secrets.TOKEN }}
         files: |
-          publish/linux/agent
-          publish/windows/agent.exe
+          publish/linux/agent-linux-x64
+          publish/windows/agent-windows-x64.exe
