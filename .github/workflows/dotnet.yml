@@ -35,6 +35,15 @@ jobs:
     - name: Prepare release
       id: release
       run: echo "shortsha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: List files
+      run: ls -R publish
+
+    - name: List files 2
+      run: ls -R .
+
+    - name: pwd
+      run: pwd
   
     - name: Release
       uses: softprops/action-gh-release@v2
