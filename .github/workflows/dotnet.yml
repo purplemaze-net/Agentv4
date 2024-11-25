@@ -36,6 +36,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.sha }}
+        token: ${{ secrets.TOKEN }}
         files: |
-          publish/linux
-          publish/windows
+           ${GITHUB_WORKSPACE}/publish/linux
+           ${GITHUB_WORKSPACE}/publish/windows
