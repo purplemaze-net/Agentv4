@@ -42,8 +42,8 @@ public enum WhitelistAction{
 
 public class ApiRequest {
 
-    [JsonProperty("ip", Required = Required.Always)]
-    public List<string> IP { get; set; }
+    [JsonProperty("ranges", Required = Required.Always)]
+    public List<string> Ranges { get; set; }
 
     [JsonProperty("timestamp", Required = Required.Always)]
     public long Timestamp { get; set; }
