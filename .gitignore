@@ -9,6 +9,12 @@ test.sh
 # Ignore all json files
 *.json
 
+# Ignore log files
+*.log
+
+# Ignore keys dir
+keys/
+
 # Mac
 .DS_Store
 
