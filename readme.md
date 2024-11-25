@@ -25,7 +25,7 @@ As a new version means new features/improvments, I rewrote the entire software t
 Well, even if I don't know why you would want to build it yourself, you can do it by:
 - Clone the repo
 - Replaceing the MasterUrl in src/FirewallManager.cs (and developing a compatible API endpoint, as specified in src/ApiStructures.cs)
-- Install DotNet SDK 6.0+
+- Install DotNet SDK 8.0+
 - Run the "build.bat" file (Both Windows and Linux are supported)
 - Solutions in `bin/Release/net6.0/linux-x64/publish` and `bin/Release/net6.0/win-x64/publish`
 
