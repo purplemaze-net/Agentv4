@@ -33,7 +33,7 @@ class Agent {
 
         // Start web server
         WebServer webServer = new(cert, servers);
-        Task.Run(webServer.startWebServer).Wait();
+        webServer.StartWebServer();
     }
 
     /// <summary>

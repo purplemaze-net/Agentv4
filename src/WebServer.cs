@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -16,6 +17,7 @@ namespace PPMV4.Agent.WebServer
         public HttpListener Listener;
         X509Certificate2 PubCert;
         Dictionary<string, Server> Servers;
+        bool Run = true;
 
         public WebServer(X509Certificate2 cert, Dictionary<string, Server> servers){
             PubCert = cert;
@@ -130,10 +132,13 @@ namespace PPMV4.Agent.WebServer
             }
         }
 
+        public void Stop(){
+            Run = false;
+        }
+
         public async Task HandleIncomingConnections()
         {
-            bool run = true;
-            while (run)
+            while (Run)
             {
                 try
                 {
@@ -194,9 +199,9 @@ namespace PPMV4.Agent.WebServer
             }
         }
 
-        public Task startWebServer()
+        public void StartWebServer()
         {
-            while (true)
+            while (Run)
             {
                 try
                 {
