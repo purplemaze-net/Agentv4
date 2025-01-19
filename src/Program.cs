@@ -17,8 +17,9 @@ class Agent {
 #elif LINUX
         new Log("Platform: Linux");
 #endif
+        
 
-        byte[] publicCert = GetRessource("Purplemaze-Agent.keys.public.key");
+        byte[] publicCert = GetRessource("Purplemaze-Agent.keys.certificate.pem");
         X509Certificate2 cert = new(publicCert);
 
         // Parse servers

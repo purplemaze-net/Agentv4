@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Write public key
-      run: 'mkdir -p keys && echo $PUBLIC_CERT > keys/public.key'
+      run: 'mkdir -p keys && echo $PUBLIC_CERT > keys/certificate.pem'
       shell: bash
       env:
         PUBLIC_CERT: ${{secrets.PUBLIC_CERT}}

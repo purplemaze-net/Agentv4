@@ -26,7 +26,7 @@ Well, even if I don't know why you would want to build it yourself, you can do i
 - Clone the repo
 - Replaceing the MasterUrl in src/FirewallManager.cs (and developing a compatible API endpoint, as specified in src/ApiStructures.cs)
 - Install DotNet SDK 8.0+
-- Run the "build.bat" file (Both Windows and Linux are supported)
+- Generate key pairs in `keys` folder: `openssl req -x509 -nodes -days 8125 -newkey rsa:4096 -keyout private.key -out certificate.pem`
 - Solutions in `bin/Release/net6.0/linux-x64/publish` and `bin/Release/net6.0/win-x64/publish`
 
 ## Can I help ?
