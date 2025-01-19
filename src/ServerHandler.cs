@@ -15,7 +15,40 @@ public class Server{
         IP = ip;
     }
 
+    /// <summary>
+    ///  Exemple: ./software "slug:ip:port" "slug:ip:port"
+    /// </summary>
+    /// <param name="args"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
     public static Dictionary<string, Server> ParseCommandLine(string[] args){
-        throw new NotImplementedException();
+        try{
+            Dictionary<string, Server> servers = new();
+            foreach(string arg in args){
+                string[] parts = arg.Split(':');
+                if(parts.Count() == 3){
+                    if(parts[0].Length != 8 || parts[0].LastIndexOfAny("abcdef0987654321".ToCharArray()) != parts[0].Length-1)
+                        throw new Exception($"Invalid slug: '{parts[0]}' in '{arg}");
+                    if(!IPAddress.TryParse(parts[1], out var sv_ip))
+                        throw new Exception($"Invalid IP: '{parts[1]}' in '{arg}");
+                    if(!ushort.TryParse(parts[2], out ushort sv_port))
+                        throw new Exception($"Invalid port: '{parts[2]}' in '{arg}");
+
+                    if(!servers.ContainsKey(parts[0]))
+                        servers.Add(parts[0], new(parts[0], sv_port, sv_ip));
+                    else
+                        throw new Exception($"Duplicated server slug: '{parts[0]}'");
+                }
+                else
+                    throw new Exception($"Unrecognized arg: '{arg}'");
+            }
+
+            return servers;
+        }
+        catch(Exception e){
+            Console.WriteLine($"{e.Message}. \nArgs must be in the format 'slug:ip:port'.\nExample1:  ./pagent \"abcdef12:10.11.12.13:80\"\nExample2:  ./pagent \"abcdef13:10.11.12.13:3011\" \"abcdff14:10.11.12.13:3012\"");
+            Environment.Exit(1);
+            throw new Exception("Error while parsing arguments");
+        }
     }
 }
