@@ -80,12 +80,6 @@ public class FirewallManager {
         }
 #pragma warning restore CA1416
 
-        var (success, output) = ExecuteCommand("netsh", "advfirewall show allprofiles");
-        if (!success || !output?.Contains("State ON") == true) {
-            new Log("The Windows Firewall is disabled. Please enable it and try again.", LogLevel.Error);
-            return false;
-        }
-
         if (!ExecuteCommand("netsh", "advfirewall firewall delete rule name=\"PPMV4\"").success) {
             new Log("Failed to delete existing PPMV4 rules. Exiting.", LogLevel.Error);
             return false;
