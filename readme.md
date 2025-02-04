@@ -1,6 +1,7 @@
 # PurpleMaze Agent (Pagent) V4
-## DISCLAIMER
-:warning: ACTUALLY, THIS VERSION IS NOT STABLE / WORKING. DO NOT USE.  
+> [!CAUTION]
+> Currently in beta phase, this software is being actively tested & modified.
+> Unless you were asked to, don't use it.
 
 ## Introduction
 As I own [PurpleMaze](https://purplemaze.net), an Anti-DDoS solution with rotating proxies, it became clear to me that I needed to find a way of authorizing only the IPs currently in use on customers' servers to prevent them from being scanned. So I developed this Pagent with this in mind.    
@@ -28,6 +29,7 @@ Well, even if I don't know why you would want to build it yourself, you can do i
 - Install DotNet SDK 8.0+
 - Generate key pairs in `keys` folder: `openssl req -x509 -nodes -days 8125 -newkey rsa:4096 -keyout private.key -out certificate.pem`
 - Solutions in `bin/Release/net6.0/linux-x64/publish` and `bin/Release/net6.0/win-x64/publish`
+- Run it with `agent "slug:ip:port" "slug2:ip2:port2"`.
 
 ## Can I help ?
 Of course! Don't hesitate to make a PR or contact me on Discord (@m2p_) if you see a possible improvement.  
