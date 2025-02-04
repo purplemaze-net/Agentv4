@@ -1,5 +1,4 @@
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -112,6 +111,8 @@ namespace PPMV4.Agent.WebServer
                                 resp.Error = "Failed to add IP to whitelist";
                                 return (resp, 400);
                             }
+                        resp.Message = "Success";
+                        resp.Success = true;
                         return (resp, 200);
                     case WhitelistAction.Remove:
                         foreach(string range in apiReq.Ranges)
@@ -119,6 +120,8 @@ namespace PPMV4.Agent.WebServer
                                 resp.Error = "Failed to remove IP from whitelist";
                                 return (resp, 400);
                             }
+                        resp.Message = "Success";
+                        resp.Success = true;
                         return (resp, 200);
                     default:
                         resp.Error = "Unknown action";
@@ -155,7 +158,7 @@ namespace PPMV4.Agent.WebServer
                     }
 
                     // Log
-                    new Log($"(WS) {req?.RemoteEndPoint}: {req?.HttpMethod} {path}");
+                    new Log($"(WS) {req?.RemoteEndPoint.Address}: {req?.HttpMethod} {path}");
 
                     // Check the path
                     if (path.Contains("/alive")) {
