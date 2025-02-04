@@ -49,7 +49,8 @@ public class Server{
                 throw new Exception($"No valid arguments");
         }
         catch(Exception e){
-            Console.WriteLine($"{e.Message}. \nArgs must be in the format 'slug:ip:port'.\nExample1:  ./pagent \"abcdef12:10.11.12.13:80\"\nExample2:  ./pagent \"abcdef13:10.11.12.13:3011\" \"abcdff14:10.11.12.13:3012\"");
+            string exeName = Path.GetFileName(Environment.ProcessPath ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "program");
+            Console.WriteLine($"{e.Message}. \nArgs must be in the format 'slug:ip:port'.\nExample1:  {exeName} \"abcdef12:10.11.12.13:80\"\nExample2:  {exeName} \"abcdef13:10.11.12.13:3011\" \"abcdff14:10.11.12.13:3012\"");
             Environment.Exit(1);
             throw new Exception("Error while parsing arguments");
         }
