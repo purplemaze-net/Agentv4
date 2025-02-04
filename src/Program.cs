@@ -26,9 +26,14 @@ class Agent {
         Dictionary<string, Server> servers = Server.ParseCommandLine(args);
 
         // Initialize firewall manager
-        FirewallManager.GetInstance(servers);
+        FirewallManager fm = FirewallManager.GetInstance(servers);
         if(!FirewallManager.InitFirewall()){
             new Log("Firewall initialization failed", LogLevel.Error);
+            Environment.Exit(1);
+        }
+
+        if(!fm.InitWhitelist()){
+            new Log("Error while initializing IP whitelist", LogLevel.Error);
             Environment.Exit(1);
         }
 
