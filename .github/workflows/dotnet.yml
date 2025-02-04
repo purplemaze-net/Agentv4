@@ -39,6 +39,9 @@ jobs:
     - name: Rename files
       run: mv publish/linux/agent publish/linux/agent-linux-x64 && mv publish/windows/agent.exe publish/windows/agent-windows-x64.exe
 
+    - name: Installer files
+      run: mv windows-installer.bat pagent-windows.bat && mv linux-install.sh pagent-linux.sh
+
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
@@ -47,3 +50,5 @@ jobs:
         files: |
           publish/linux/agent-linux-x64
           publish/windows/agent-windows-x64.exe
+          pagent-windows.bat
+          pagent-linux.sh
