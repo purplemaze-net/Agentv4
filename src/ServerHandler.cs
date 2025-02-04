@@ -43,7 +43,10 @@ public class Server{
                     throw new Exception($"Unrecognized arg: '{arg}'");
             }
 
-            return servers;
+            if(servers.Count > 0)
+                return servers;
+            else
+                throw new Exception($"No valid arguments");
         }
         catch(Exception e){
             Console.WriteLine($"{e.Message}. \nArgs must be in the format 'slug:ip:port'.\nExample1:  ./pagent \"abcdef12:10.11.12.13:80\"\nExample2:  ./pagent \"abcdef13:10.11.12.13:3011\" \"abcdff14:10.11.12.13:3012\"");

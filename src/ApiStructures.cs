@@ -4,10 +4,10 @@ namespace PPMV4.Agent.Structures;
 
 #pragma warning disable CS8618 // Don't warn possible-null-values as it will throw an error if the serialization fails.
 public class InitialRequestData {
-    [JsonProperty("infra", Required = Required.Always)]
+    [JsonProperty("infra_ranges", Required = Required.Always)]
     public List<string> InfraRanges { get; set; }
 
-    [JsonProperty("proxies", Required = Required.Always)]
+    [JsonProperty("server_ranges", Required = Required.Always)]
     public List<string> ProxiesRanges { get; set; }
 }
 
@@ -15,8 +15,8 @@ public class ApiResponse<T> {
     [JsonProperty("success", Required = Required.Always)]
     public bool Success { get; set; }
 
-    [JsonProperty("error", Required = Required.AllowNull, NullValueHandling = NullValueHandling.Ignore)]
-    public string? Error { get; set; }
+    [JsonProperty("error", NullValueHandling = NullValueHandling.Ignore)]
+    public string? Error { get; set; } = null;
 
     [JsonProperty("message", Required = Required.AllowNull, NullValueHandling = NullValueHandling.Ignore)]
     public string? Message { get; set; }

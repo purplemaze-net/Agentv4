@@ -204,21 +204,26 @@ public class FirewallManager {
                 var response = httpClient.GetAsync($"{MasterUrl}/ranges/{server.Value.Slug}").GetAwaiter().GetResult();
                 if (response.IsSuccessStatusCode) {
                     var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                    ApiResponse<InitialRequestData>? data = JsonConvert.DeserializeObject<ApiResponse<InitialRequestData>>(content);
-                    if (data is null || data.Data is null) {
-                        new Log($"Failed to deserialize IP ranges for server {server.Key}", LogLevel.Error);
-                        return false;
-                    }
-
-                    if(!systemDone){
-                        foreach (var range in data.Data.InfraRanges) {
-                            Add(range, AgentPort, true);
+                    try{
+                        ApiResponse<InitialRequestData>? data = JsonConvert.DeserializeObject<ApiResponse<InitialRequestData>>(content);
+                        if (data is null || data.Data is null) {
+                            new Log($"Failed to deserialize IP ranges for server {server.Key}", LogLevel.Error);
+                            return false;
                         }
-                        systemDone = true;
-                    }
 
-                    foreach (var range in data.Data.ProxiesRanges) {
-                        Add(range, server.Value.Port);
+                        if(!systemDone){
+                            foreach (var range in data.Data.InfraRanges) {
+                                Add(range, AgentPort, true);
+                            }
+                            systemDone = true;
+                        }
+
+                        foreach (var range in data.Data.ProxiesRanges) {
+                            Add(range, server.Value.Port);
+                        }
+                    }
+                    catch(Exception e){
+                        new Log($"Error while getting initial ranges. HTTP response: {content}\n{e.Message}", LogLevel.Error);
                     }
                 }
                 else
