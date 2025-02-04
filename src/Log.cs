@@ -41,7 +41,7 @@ public class Log
         LogHandler handler = LogHandler.GetInstance();
         
         // Write in file
-        var formattedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{GetPrefix(level)}] {message}";
+        var formattedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {GetPrefix(level)} {message}";
         handler.Write(formattedMessage);
         
         ConsoleColor originalColor = Console.ForegroundColor;
