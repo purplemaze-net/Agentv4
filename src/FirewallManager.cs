@@ -80,11 +80,8 @@ public class FirewallManager {
         }
 #pragma warning restore CA1416
 
-        if (!ExecuteCommand("netsh", "advfirewall firewall delete rule name=\"PPMV4\"").success) {
-            new Log("Failed to delete existing PPMV4 rules. Exiting.", LogLevel.Error);
-            return false;
-        }
-
+        // Init purge old rules
+        ExecuteCommand("netsh", "advfirewall firewall delete rule name=\"PPMV4\"");
         return true;
     }
 
