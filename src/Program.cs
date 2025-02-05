@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using PPMV4.Agent.Firewall;
 using PPMV4.Agent.Logging;
 using PPMV4.Agent.ServerHandler;
@@ -18,7 +17,7 @@ class Agent {
         new Log("Platform: Linux");
 #endif
 
-        byte[] publicCert = GetRessource("Purplemaze-Agent.keys.certificate.pem");
+        byte[] publicCert = GetCertificate();
         X509Certificate2 cert = new(publicCert);
 
         // Parse servers
@@ -42,29 +41,33 @@ class Agent {
     }
 
     /// <summary>
-    ///  Get content from an embedded resource
+    ///  Get content from embedded certificate
     /// </summary>
-    /// <param name="name">Name of the resource</param>
-    static byte[] GetRessource(string name) {
+    static byte[] GetCertificate() {
         var assembly = Assembly.GetExecutingAssembly();
         string[] ressources = assembly.GetManifestResourceNames();
         
         foreach (string ressource in ressources) {
-            if (ressource == name) {
+            if (ressource == "Purplemaze-Agent.keys.certificate.pem") {
                 using (Stream? stream = assembly.GetManifestResourceStream(ressource)) {
                     if(stream != null) {
-                        // Direct binary read instead of using StreamReader
-                        using (MemoryStream ms = new MemoryStream()) {
-                            stream.CopyTo(ms);
-                            return ms.ToArray();
+                        using (StreamReader reader = new(stream)) {
+                            string pemContent = reader.ReadToEnd();
+                            // Remove PEM headers and decode base64
+                            string base64 = pemContent
+                                .Replace("-----BEGIN CERTIFICATE-----", "")
+                                .Replace("-----END CERTIFICATE-----", "")
+                                .Replace("\n", "")
+                                .Replace("\r", "");
+                            return Convert.FromBase64String(base64);
                         }
                     }
                 }
             }
         }
 
-        // If not found or null somewhere
         throw new Exception("Resource not found");
     }
+
 
 }
