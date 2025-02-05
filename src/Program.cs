@@ -51,10 +51,13 @@ class Agent {
         
         foreach (string ressource in ressources) {
             if (ressource == name) {
-                using (Stream? stream = assembly.GetManifestResourceStream(ressource))
-                if(stream != null){
-                    using (StreamReader reader = new(stream)) {
-                        return Encoding.UTF8.GetBytes(reader.ReadToEnd());
+                using (Stream? stream = assembly.GetManifestResourceStream(ressource)) {
+                    if(stream != null) {
+                        // Direct binary read instead of using StreamReader
+                        using (MemoryStream ms = new MemoryStream()) {
+                            stream.CopyTo(ms);
+                            return ms.ToArray();
+                        }
                     }
                 }
             }
