@@ -92,7 +92,7 @@ namespace PPMV4.Agent.WebServer
             }
 
             // Check TTL
-            if(!CheckTimestamp(apiReq.Timestamp, apiReq.TTL)){
+            if(CheckTimestamp(apiReq.Timestamp, apiReq.TTL)){
                 resp.Error = "Request expired";
                 return (resp, 400);
             }
