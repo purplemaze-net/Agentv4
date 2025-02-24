@@ -100,6 +100,7 @@ public class FirewallManager {
             return false;
         }
 
+        // Check if the chain exists
         if (!ExecuteCommand("iptables", "-L PPMV4").success) {
             new Log("Chain PPMV4 not found. Creating it.", LogLevel.Info);
             if (!ExecuteCommand("iptables", "-N PPMV4").success) {
@@ -108,11 +109,22 @@ public class FirewallManager {
             }
         }
 
+        // Flush chain
         if (!ExecuteCommand("iptables", "-F PPMV4").success) {
             new Log("Failed to flush chain PPMV4. Exiting.", LogLevel.Error);
             return false;
         }
 
+        // Check if integration rule exists
+        ExecuteCommand("iptables", "-D INPUT -j PPMV4");
+
+        // Insert ppmv4 chain at the begenning of the INPUT chain
+        if (!ExecuteCommand("iptables", "-I INPUT -j PPMV4").success) {
+            new Log("Failed to integrate PPMV4 chain into INPUT chain. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        new Log("Successfully initialized iptables firewall with PPMV4 chain.", LogLevel.Info);
         return true;
     }
 
@@ -155,6 +167,19 @@ public class FirewallManager {
     /// <param name="port"></param>
     /// <returns></returns>
     private bool DefaultBlockForServerWindows(ushort port){
+        // tcp
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4-Block-TCP-{port}\" dir=in action=block protocol=TCP localport={port}").success) {
+            new Log($"Failed to add TCP block rule for port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        // udp
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4-Block-UDP-{port}\" dir=in action=block protocol=UDP localport={port}").success) {
+            new Log($"Failed to add UDP block rule for port {port}. Exiting.", LogLevel.Error);
+            return false;
+        }
+
+        new Log($"Successfully added blocking rules for port {port}", LogLevel.Info);
         return true;
     }
 
@@ -312,8 +337,10 @@ public class FirewallManager {
     /// <param name="infra"></param>
     /// <returns></returns>
     private static bool AddOnWindows(string range, ushort port, bool infra = false){
-        if(infra){
-            if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").success) {
+        string ruleName = infra ? $"PPMV4-Allow-Infra-{port}" : $"PPMV4-Allow-{port}";
+
+        if (infra) {
+            if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").success) {
                 new Log($"Failed to add infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
                 return false;
             }
@@ -321,12 +348,12 @@ public class FirewallManager {
             return AddOnWindows(range, port, false);
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").success) {
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}-TCP\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").success) {
             new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").success) {
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}-UDP\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").success) {
             new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
@@ -374,8 +401,10 @@ public class FirewallManager {
     /// <param name="infra"></param>
     /// <returns></returns>
     private static bool RemoveOnWindows(string range, ushort port, bool infra = false){
-        if(infra){
-            if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").success) {
+        string ruleName = infra ? $"PPMV4-Allow-Infra-{port}" : $"PPMV4-Allow-{port}";
+
+        if (infra) {
+            if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}\" dir=in protocol=TCP localport={AgentPort} remoteip={range}").success) {
                 new Log($"Failed to remove infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
                 return false;
             }
@@ -383,12 +412,12 @@ public class FirewallManager {
             return RemoveOnWindows(range, port, false);
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").success) {
+        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}-TCP\" dir=in protocol=TCP localport={port} remoteip={range}").success) {
             new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"PPMV4\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").success) {
+        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}-UDP\" dir=in protocol=UDP localport={port} remoteip={range}").success) {
             new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
             return false;
         }
