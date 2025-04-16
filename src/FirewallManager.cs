@@ -115,9 +115,6 @@ public class FirewallManager {
             return false;
         }
 
-        // Check if integration rule exists
-        ExecuteCommand("iptables", "-D INPUT -j PPMV4");
-
         // Insert ppmv4 chain at the begenning of the INPUT chain
         if (!ExecuteCommand("iptables", "-I INPUT -j PPMV4").success) {
             new Log("Failed to integrate PPMV4 chain into INPUT chain. Exiting.", LogLevel.Error);
