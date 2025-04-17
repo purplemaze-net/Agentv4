@@ -217,14 +217,15 @@ public class FirewallManager {
         bool systemDone = false;
 
         foreach (var server in Servers){
-            if(!DefaultBlockForServer(server.Value)){
-                new Log($"Failed to block traffic for server {server.Key}. Exiting.", LogLevel.Error);
-                return false;
-            }
-
             using (var httpClient = GetHttpClient(server.Value.IP)) {
                 var response = httpClient.GetAsync($"{MasterUrl}/ranges/{server.Value.Slug}").GetAwaiter().GetResult();
                 if (response.IsSuccessStatusCode) {
+                    // Init firewall
+                    if(!DefaultBlockForServer(server.Value)){
+                        new Log($"Failed to block traffic for server {server.Key}. Exiting.", LogLevel.Error);
+                        return false;
+                    }
+
                     var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                     try{
                         ApiResponse<InitialRequestData>? data = JsonConvert.DeserializeObject<ApiResponse<InitialRequestData>>(content);
