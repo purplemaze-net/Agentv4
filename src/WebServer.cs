@@ -49,7 +49,7 @@ namespace PPMV4.Agent.WebServer
             }
         }
 
-        public static async void SendResponse(HttpListenerResponse resp, ApiResponse<JObject> apiResp, int httpCode){
+        public static void SendResponse(HttpListenerResponse resp, ApiResponse<JObject> apiResp, int httpCode){
             if(!resp.OutputStream.CanWrite)
                 return;
 
@@ -58,7 +58,7 @@ namespace PPMV4.Agent.WebServer
 
             byte[] buffer = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(apiResp));
             resp.ContentLength64 = buffer.Length;
-            await resp.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            resp.OutputStream.WriteAsync(buffer, 0, buffer.Length).Wait();
 
             resp.Close();
         }
