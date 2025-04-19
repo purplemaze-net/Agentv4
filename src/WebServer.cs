@@ -121,6 +121,7 @@ namespace PPMV4.Agent.WebServer
                             }
                         resp.Message = "Success";
                         resp.Success = true;
+                        resp.Error = null;
                         return (resp, 200);
                     case WhitelistAction.Remove:
                         foreach(string range in apiReq.Ranges)
@@ -130,6 +131,7 @@ namespace PPMV4.Agent.WebServer
                             }
                         resp.Message = "Success";
                         resp.Success = true;
+                        resp.Error = null;
                         return (resp, 200);
                     default:
                         resp.Error = "Unknown action";
