@@ -31,21 +31,29 @@ namespace PPMV4.Agent.WebServer
             return Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - timestamp) > ttl;
         }
 
-        private bool CheckSignature(string signature, string body){
-            byte[] data = Encoding.UTF8.GetBytes(body);
-            byte[] signatureBytes = Convert.FromBase64String(signature);
-
-            using (RSA? rsa = PubCert.GetRSAPublicKey())
+        private bool CheckSignature(string signature, string body) {
+            try
             {
-                if(rsa is null)
-                    return false;
+                byte[] data = Encoding.UTF8.GetBytes(body);
+                byte[] signatureBytes = Convert.FromBase64String(signature);
 
-                // Check with rsa
-                return rsa.VerifyData(
-                    data,
-                    signatureBytes,
-                    HashAlgorithmName.SHA512,
-                    RSASignaturePadding.Pss);
+                using (RSA? rsa = PubCert.GetRSAPublicKey())
+                {
+                    if (rsa is null)
+                        return false;
+
+                    // Check with rsa
+                    return rsa.VerifyData(
+                        data,
+                        signatureBytes,
+                        HashAlgorithmName.SHA512,
+                        RSASignaturePadding.Pss
+                    );
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
