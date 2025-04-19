@@ -161,36 +161,44 @@ namespace PPMV4.Agent.WebServer
                     new Log($"(WS) {req?.RemoteEndPoint.Address}: {req?.HttpMethod} {path}");
 
                     // Check the path
-                    if (path.Contains("/alive")) {
+                    if (path.Contains("/alive"))
+                    {
                         apiResp = new(true, "alive !");
+                        SendResponse(resp, apiResp, 200);
                     }
-                    else if (path.Contains("/whitelist")) {
+                    else if (path.Contains("/whitelist"))
+                    {
                         // Extract slug
                         string? slug = null;
                         // check method
-                        if(path.Split("/").Count() != 3){
+                        if (path.Split("/").Count() != 3)
+                        {
                             apiResp = new(false, "Unknown route");
                             SendResponse(resp, apiResp, 404);
                             return;
                         }
                         slug = path.Split("/")[2]; // /whitelist/{slug}
-                        
-                        if (req?.HttpMethod == "POST") {
+
+                        if (req?.HttpMethod == "POST")
+                        {
                             // handle request
                             (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Add, slug);
-                            SendResponse(resp, apiResp, respCode);    
+                            SendResponse(resp, apiResp, respCode);
                         }
-                        else if (req?.HttpMethod == "DELETE") {
+                        else if (req?.HttpMethod == "DELETE")
+                        {
                             // handle request
                             (apiResp, int respCode) = WhitelistHandler(req, WhitelistAction.Remove, slug);
                             SendResponse(resp, apiResp, respCode);
                         }
-                        else {
+                        else
+                        {
                             apiResp = new(false, "Unknown method");
                             SendResponse(resp, apiResp, 405);
                         }
                     }
-                    else {
+                    else
+                    {
                         apiResp = new(false, "Unknown route");
                         SendResponse(resp, apiResp, 404);
                     }
