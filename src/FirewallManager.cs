@@ -132,7 +132,7 @@ public class FirewallManager {
     /// <returns></returns>
     private bool DefaultBlockForServer(Server server){
 #if WINDOWS
-        return DefaultBlockForServerWindows(server.Port);
+        return true;
 #elif LINUX
         return DefaultBlockForServerLinux(server.Port);
 #endif
@@ -155,28 +155,6 @@ public class FirewallManager {
             return false;
         }
 
-        return true;
-    }
-
-    /// <summary>
-    ///  Block traffic for a server (Windows)
-    /// </summary>
-    /// <param name="port"></param>
-    /// <returns></returns>
-    private bool DefaultBlockForServerWindows(ushort port){
-        // tcp
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4-Block-TCP-{port}\" dir=in action=block protocol=TCP localport={port}").success) {
-            new Log($"Failed to add TCP block rule for port {port}. Exiting.", LogLevel.Error);
-            return false;
-        }
-
-        // udp
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"PPMV4-Block-UDP-{port}\" dir=in action=block protocol=UDP localport={port}").success) {
-            new Log($"Failed to add UDP block rule for port {port}. Exiting.", LogLevel.Error);
-            return false;
-        }
-
-        new Log($"Successfully added blocking rules for port {port}", LogLevel.Info);
         return true;
     }
 
