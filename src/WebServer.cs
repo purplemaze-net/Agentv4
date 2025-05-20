@@ -31,7 +31,27 @@ namespace PPMV4.Agent.WebServer
             return Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - timestamp) > ttl;
         }
 
-        private bool CheckSignature(string signature, string body) {
+        /// <summary>
+        ///  Check if each range is valid (ip/subnet)
+        /// </summary>
+        /// <param name="ranges"></param>
+        /// <returns></returns>
+        private bool CheckRanges(List<string> ranges)
+        {
+            foreach (string range in ranges)
+            {
+                // Split
+                string[] parts = range.Split('/');
+                if (parts.Length != 2 || !IPAddress.TryParse(parts[0], out _))
+                    return false;
+                if(!ushort.TryParse(parts[1], out ushort subnet) || subnet > 32)
+                    return false;
+            }
+            return true;
+        }
+
+        private bool CheckSignature(string signature, string body)
+        {
             try
             {
                 byte[] data = Encoding.UTF8.GetBytes(body);
@@ -111,11 +131,20 @@ namespace PPMV4.Agent.WebServer
                 return (resp, 400);
             }
 
-            try{
-                switch(action){
+            // Check ranges
+            if(!CheckRanges(apiReq.Ranges)){
+                resp.Error = "Invalid ranges";
+                return (resp, 400);
+            }
+
+            try
+            {
+                switch (action)
+                {
                     case WhitelistAction.Add:
-                        foreach(string range in apiReq.Ranges)
-                            if(!FirewallManager.Add(range, Servers[slug].Port, false)){
+                        foreach (string range in apiReq.Ranges)
+                            if (!FirewallManager.Add(range, Servers[slug].Port, false))
+                            {
                                 resp.Error = "Failed to add IP to whitelist";
                                 return (resp, 400);
                             }
@@ -124,8 +153,9 @@ namespace PPMV4.Agent.WebServer
                         resp.Error = null;
                         return (resp, 200);
                     case WhitelistAction.Remove:
-                        foreach(string range in apiReq.Ranges)
-                            if(!FirewallManager.Remove(range, Servers[slug].Port, false)){
+                        foreach (string range in apiReq.Ranges)
+                            if (!FirewallManager.Remove(range, Servers[slug].Port, false))
+                            {
                                 resp.Error = "Failed to remove IP from whitelist";
                                 return (resp, 400);
                             }
@@ -138,7 +168,8 @@ namespace PPMV4.Agent.WebServer
                         return (resp, 400);
                 }
             }
-            catch(Exception e){
+            catch (Exception e)
+            {
                 new Log($"Error in whitelist handler: {e.Message}");
                 resp.Error = "Internal server error";
                 return (resp, 500);
