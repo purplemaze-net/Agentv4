@@ -1,7 +1,4 @@
 # PurpleMaze Agent (Pagent) V4
-> [!CAUTION]
-> Currently in beta phase, this software is being actively tested & modified.
-> Unless you were asked to, don't use it.
 
 ## Introduction
 As I own [PurpleMaze](https://purplemaze.net), an Anti-DDoS solution with rotating proxies, it became clear to me that I needed to find a way of authorizing only the IPs currently in use on customers' servers to prevent them from being scanned. So I developed this Pagent with this in mind.    
