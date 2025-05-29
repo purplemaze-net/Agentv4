@@ -231,7 +231,7 @@ public class FirewallManager {
                         }
 
                         foreach (var range in data.Data.ProxiesRanges) {
-                            if(IPAddressRange.TryParse(range, out _)
+                            if(IPAddressRange.TryParse(range, out _))
                                 Add(range, server.Value.Port);
                         }
                     }
