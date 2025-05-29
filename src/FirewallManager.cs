@@ -224,13 +224,15 @@ public class FirewallManager {
 
                         if(!systemDone){
                             foreach (var range in data.Data.InfraRanges) {
-                                Add(range, AgentPort, true);
+                                if(IPAddressRange.TryParse(range, out _))
+                                    Add(range, AgentPort, true);
                             }
                             systemDone = true;
                         }
 
                         foreach (var range in data.Data.ProxiesRanges) {
-                            Add(range, server.Value.Port);
+                            if(IPAddressRange.TryParse(range, out _)
+                                Add(range, server.Value.Port);
                         }
                     }
                     catch(Exception e){
