@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using NetTools;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PPMV4.Agent.Firewall;
@@ -40,12 +41,10 @@ namespace PPMV4.Agent.WebServer
         {
             foreach (string range in ranges)
             {
-                // Split
-                string[] parts = range.Split('/');
-                if (parts.Length != 2 || !IPAddress.TryParse(parts[0], out _))
+                if(!IPAddressRange.TryParse(range, out _)){
+                    new Log($"Invalid range: {range}", LogLevel.Warning);
                     return false;
-                if(!ushort.TryParse(parts[1], out ushort subnet) || subnet > 32)
-                    return false;
+                }
             }
             return true;
         }
