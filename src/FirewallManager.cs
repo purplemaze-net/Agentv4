@@ -80,8 +80,18 @@ public class FirewallManager {
         }
 #pragma warning restore CA1416
 
-        // Init purge old rules
-        ExecuteCommand("netsh", "advfirewall firewall delete rule name=\"PPMV4\"");
+        // Get all rules with PPMV4 in the name and delete them
+        var (success, output) = ExecuteCommand("netsh", "advfirewall firewall show rule name=all");
+        if (success && output != null) {
+            // Parse output to find PPMV4 rules
+            var lines = output.Split('\n');
+            foreach (var line in lines) {
+                if (line.Contains("Rule Name:") && line.Contains("PPMV4")) {
+                    var ruleName = line.Replace("Rule Name:", "").Trim();
+                    ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}\"");
+                }
+            }
+        }
         return true;
     }
 
@@ -245,11 +255,6 @@ public class FirewallManager {
     /// <param name="infra"></param>
     /// <returns></returns>
     public static bool Add(string range, ushort port, bool infra = false){
-        if(!IPAddressRange.TryParse(range, out _)){
-            new Log($"Invalid range: {range}", LogLevel.Warning);
-            return false;
-        }
-
 #if WINDOWS
         return AddOnWindows(range, port, infra);
 #elif LINUX
@@ -314,23 +319,24 @@ public class FirewallManager {
     /// <returns></returns>
     private static bool AddOnWindows(string range, ushort port, bool infra = false){
         string ruleName = infra ? $"PPMV4-Allow-Infra-{port}" : $"PPMV4-Allow-{port}";
+        string ruleNameWithRange = $"{ruleName}-{range.Replace('/', '-')}";
 
         if (infra) {
-            if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").success) {
-                new Log($"Failed to add infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+            if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleNameWithRange}\" dir=in action=allow protocol=TCP localport={AgentPort} remoteip={range}").success) {
+                new Log($"Failed to add infra rule for range {range} on port {port}.", LogLevel.Error);
                 return false;
             }
 
             return AddOnWindows(range, port, false);
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}-TCP\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").success) {
-            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleNameWithRange}-TCP\" dir=in action=allow protocol=TCP localport={port} remoteip={range}").success) {
+            new Log($"Failed to add TCP rule for range {range} on port {port}.", LogLevel.Error);
             return false;
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleName}-UDP\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").success) {
-            new Log($"Failed to add rule for range {range} on port {port}. Exiting.", LogLevel.Error);
+        if (!ExecuteCommand("netsh", $"advfirewall firewall add rule name=\"{ruleNameWithRange}-UDP\" dir=in action=allow protocol=UDP localport={port} remoteip={range}").success) {
+            new Log($"Failed to add UDP rule for range {range} on port {port}.", LogLevel.Error);
             return false;
         }
 
@@ -378,24 +384,23 @@ public class FirewallManager {
     /// <returns></returns>
     private static bool RemoveOnWindows(string range, ushort port, bool infra = false){
         string ruleName = infra ? $"PPMV4-Allow-Infra-{port}" : $"PPMV4-Allow-{port}";
+        string ruleNameWithRange = $"{ruleName}-{range.Replace('/', '-')}";
 
         if (infra) {
-            if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}\" dir=in protocol=TCP localport={AgentPort} remoteip={range}").success) {
-                new Log($"Failed to remove infra rule for range {range} on port {port}. Exiting.", LogLevel.Error);
-                return false;
+            if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleNameWithRange}\" dir=in protocol=TCP localport={AgentPort} remoteip={range}").success) {
+                new Log($"Failed to remove infra rule for range {range} on port {port}.", LogLevel.Warning);
+                // Don't return false as the rule *might* not exist
             }
 
             return RemoveOnWindows(range, port, false);
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}-TCP\" dir=in protocol=TCP localport={port} remoteip={range}").success) {
-            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
-            return false;
+        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleNameWithRange}-TCP\" dir=in protocol=TCP localport={port} remoteip={range}").success) {
+            new Log($"Failed to remove TCP rule for range {range} on port {port}.", LogLevel.Warning);
         }
 
-        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleName}-UDP\" dir=in protocol=UDP localport={port} remoteip={range}").success) {
-            new Log($"Failed to remove rule for range {range} on port {port}. Exiting.", LogLevel.Error);
-            return false;
+        if (!ExecuteCommand("netsh", $"advfirewall firewall delete rule name=\"{ruleNameWithRange}-UDP\" dir=in protocol=UDP localport={port} remoteip={range}").success) {
+            new Log($"Failed to remove UDP rule for range {range} on port {port}.", LogLevel.Warning);
         }
 
         new Log($"Removed {range} on port {port}", LogLevel.Info);
