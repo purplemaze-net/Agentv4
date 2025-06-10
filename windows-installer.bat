@@ -10,29 +10,38 @@ rd /s /q nssm-2.24
 
 :: PAgent
 echo Downloading PAgent...
-:: Download latest release
 curl -L -o agent.exe https://github.com/purplemaze-net/Agentv4/releases/latest/download/agent-windows-x64.exe
 
-:: public IP detection
+:: Public IP detection
 echo Getting public IP...
-for /f "delims=" %%a in ('curl -s ifconfig.me') do set PUBLIC_IP=%%a
+for /f "delims=" %%a in ('curl --ipv4 -s ifconfig.me') do set PUBLIC_IP=%%a
 echo Detected public IP: %PUBLIC_IP%
 
 :: Info gathering
 set /p OVERRIDE_IP="Do you want to use a different public IP? (leave empty to use %PUBLIC_IP%): "
 if not "%OVERRIDE_IP%"=="" set PUBLIC_IP=%OVERRIDE_IP%
 
-:: Loop for infos
-set ARGS=
-set /p NB_CONFIGS=""
+:: Loop for multiple configs
+set /p NB_CONFIGS="How much servers do you want to config? "
 
-set /p SLUG="Server Slug (find it on the settings page) : "
-set /p PORT="FiveM server port : "
-set ARGS="!SLUG!:!PUBLIC_IP!:!PORT!"
-
-nssm install PAgent "%~dp0agent.exe" %ARGS%
-nssm start PAgent
+for /L %%i in (1,1,%NB_CONFIGS%) do (
+    echo.
+    echo === Configuration %%i / %NB_CONFIGS% ===
+    
+    set /p SLUG="Server Slug for config %%i (find it on the settings page): "
+    set /p PORT="FiveM server port for config %%i: "
+    
+    :: Build service name and arguments
+    set SERVICE_NAME=PAgent_%%i
+    set ARGS=!SLUG!:!PUBLIC_IP!:!PORT!
+    
+    echo Installing service: !SERVICE_NAME! with args: !ARGS!
+    nssm install !SERVICE_NAME! "%~dp0agent.exe" !ARGS!
+    nssm start !SERVICE_NAME!
+    
+    echo Service !SERVICE_NAME! installed and started
+)
 
 echo.
-echo PAgent installed and started as a service
+echo All %NB_CONFIGS% PAgent services installed and started
 pause
