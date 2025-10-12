@@ -234,6 +234,14 @@ public class FirewallManager {
                             if(IPAddressRange.TryParse(range, out _))
                                 Add(range, server.Value.Port);
                         }
+                        
+                        if(server.Value.TxPort is not null)
+                        {
+                            foreach(var range in data.Data.TxRanges)
+                            {
+                                Add(range, server.Value.TxPort.Value);
+                            }
+                        }
                     }
                     catch(Exception e){
                         new Log($"Error while getting initial ranges. HTTP response: {content}\n{e.Message}", LogLevel.Error);

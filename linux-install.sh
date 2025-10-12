@@ -27,6 +27,12 @@ fi
 # Get configuration
 read -p "Server Slug (find it on the settings page) : " SLUG
 read -p "FiveM server port : " PORT
+read -p "FiveM txAdmin port (blank if not using txAdmin): " TXPORT
+
+FORMATTED="$SLUG:$PUBLIC_IP:$PORT"
+if [ ! -z "$TXPORT" ]; then
+    FORMATTED="$FORMATTED:$TXPORT"
+fi
 
 # Create systemd service file
 cat > /etc/systemd/system/pagent.service << EOF
@@ -37,7 +43,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/agent "$SLUG:$PUBLIC_IP:$PORT"
+ExecStart=/usr/local/bin/agent "$FORMATTED"
 Restart=always
 RestartSec=10
 

@@ -9,6 +9,9 @@ public class InitialRequestData {
 
     [JsonProperty("server_ranges", Required = Required.Always)]
     public List<string> ProxiesRanges { get; set; }
+
+    [JsonProperty("tx_ranges", Required = Required.Always)]
+    public List<string> TxRanges { get; set; }
 }
 
 public class ApiResponse<T> {
