@@ -229,8 +229,17 @@ public class FirewallManager {
                             systemDone = true;
                         }
 
-                        foreach (var range in data.Data.ProxiesRanges) {
+                        foreach (var range in data.Data.ProxiesRanges)
+                        {
                             Add(range, server.Value.Port);
+                        }
+                        
+                        if(server.Value.TxPort is not null)
+                        {
+                            foreach(var range in data.Data.TxRanges)
+                            {
+                                Add(range, server.Value.TxPort.Value);
+                            }
                         }
                     }
                     catch(Exception e){
