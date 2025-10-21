@@ -14,7 +14,7 @@ curl -L -o agent.exe https://github.com/purplemaze-net/Agentv4/releases/latest/d
 
 :: Public IP detection
 echo Getting public IP...
-for /f "delims=" %%a in ('curl --ipv4 -s ifconfig.me') do set PUBLIC_IP=%%a
+for /f "delims=" %%a in ('curl --ipv4 -s ip.m2p.dev') do set PUBLIC_IP=%%a
 echo Detected public IP: %PUBLIC_IP%
 
 :: Info gathering

@@ -15,7 +15,7 @@ chmod +x /usr/local/bin/agent
 
 # Get public IP
 echo "Detecting public IP..."
-PUBLIC_IP=$(curl --ipv4 -s ifconfig.me)
+PUBLIC_IP=$(curl --ipv4 -s ip.m2p.dev)
 echo "Detected public IP: $PUBLIC_IP"
 
 # Ask for IP override
