@@ -1,5 +1,10 @@
 # PurpleMaze Agent (Pagent) V4
 
+## Installation
+In the Releases page, grab the latest linux-install.sh OR windows-installer.bat (according to your server OS). Run this file, follow the instructions and you're done!
+> [!WARNING]
+> On Windows Server 2025+, you'll need to open a cmd **as administrator**, then executing the setup script. Otherwise, the service will not start as intended.
+
 ## Introduction
 As I own [PurpleMaze](https://purplemaze.net), an Anti-DDoS solution with rotating proxies, it became clear to me that I needed to find a way of authorizing only the IPs currently in use on customers' servers to prevent them from being scanned. So I developed this Pagent with this in mind.    
 

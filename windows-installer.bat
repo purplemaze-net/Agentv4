@@ -25,7 +25,7 @@ set /p SLUG="Server Slug (find it on the settings page) : "
 set /p PORT="FiveM server port : "
 set /p TXPORT="FiveM txAdmin port (blank if no txAdmin): "
 set ARGS="!SLUG!:!PUBLIC_IP!:!PORT!"
-if not "%OVERRIDE_IP%"=="" set ARGS="!SLUG!:!PUBLIC_IP!:!PORT!:!TXPORT!"
+if not "%TXPORT%"=="" set ARGS="!SLUG!:!PUBLIC_IP!:!PORT!:!TXPORT!"
 
 nssm install PAgent "%~dp0agent.exe" %ARGS%
 nssm start PAgent
