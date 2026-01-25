@@ -144,7 +144,10 @@ public class FirewallManager {
 #if WINDOWS
         return true;
 #elif LINUX
-        return DefaultBlockForServerLinux(server.Port);
+        if(!DefaultBlockForServerLinux(server.Port)) return false;
+        if(server.TxPort.HasValue && !DefaultBlockForServerLinux(server.TxPort.Value)) return false;
+
+        return true;
 #endif
         return false;
     }
