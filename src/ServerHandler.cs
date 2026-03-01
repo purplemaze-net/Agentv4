@@ -33,7 +33,7 @@ public class Server{
                 if (parts.Count() == 3 || parts.Count() == 4)
                 {
                     ushort tx_port = 0;
-                    if (parts[0].Length != 8 || parts[0].LastIndexOfAny("abcdef0987654321".ToCharArray()) != parts[0].Length - 1)
+                    if (parts[0].Length != 8 || parts[0].LastIndexOfAny("abcdefghijklmnopqrstuvwxyz0987654321".ToCharArray()) != parts[0].Length - 1)
                         throw new Exception($"Invalid slug: '{parts[0]}' in '{arg}");
                     if (!IPAddress.TryParse(parts[1], out var sv_ip))
                         throw new Exception($"Invalid IP: '{parts[1]}' in '{arg}");
